@@ -1,0 +1,23 @@
+{
+  "name": "korso",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Korso",
+  "scripts": {
+    "dev": "concurrently \"pnpm dev --filter @korso/api\" \"pnpm start --filter @korso/mobile\"",
+    "dev:mobile": "pnpm start --filter @korso/mobile",
+    "dev:api": "pnpm dev --filter @korso/api",
+    "build": "pnpm build --filter @korso/api && pnpm build --filter @korso/mobile",
+    "lint": "pnpm lint --filter @korso/api && pnpm lint --filter @korso/mobile && pnpm lint --filter @korso/shared",
+    "typecheck": "pnpm typecheck --filter @korso/api && pnpm typecheck --filter @korso/mobile",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

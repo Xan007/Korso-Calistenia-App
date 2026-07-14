@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  displayName  String?
+  googleId     String?   @unique
+  avatarUrl    String?
+
+  passwordHash String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  academicProfile AcademicProfile?
+  checkIns       CheckIn[]
+  homeSessions   HomeSession[]
+  hibernations   Hibernation[]
+  stamps         UserStamp[]
+  photos         PhotoDaily[]
+  wrappeds       WeeklyWrapped[]
+  predictions    Prediction[]
+  notifications  Notification[]
+
+  @@index([email])
+  @@index([googleId])
+}
+
+model AcademicProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semester      String
+  career        String
+  availability  Json
+  partialsRanges Json
+  deliveryDates Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CheckIn {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime @default(now())
+  wasInHibernation Boolean @default(false)
+  stamp           UserStamp?
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model HomeSession {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       DateTime @default(now())
+  duration   Int      @default(10)
+  completed  Boolean  @default(false)
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+model Hibernation {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate  DateTime
+  endDate    DateTime
+  isActive   Boolean  @default(true)
+  reason     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model Stamp {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String
+  category    String
+  stage       String?
+  barType     String?
+  difficulty  Int      @default(1)
+
+  createdAt DateTime @default(now())
+}
+
+model UserStamp {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stampId    String
+  stamp      Stamp    @relation(fields: [stampId], references: [id])
+  unlockedAt DateTime @default(now())
+  checkInId  String?
+  checkIn    CheckIn? @relation(fields: [checkInId], references: [id])
+
+  @@unique([userId, stampId])
+  @@index([userId])
+  @@index([stampId])
+}
+
+model PhotoDaily {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date     DateTime
+  url      String
+  thumbnail String?
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model WeeklyWrapped {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart   DateTime
+  weekEnd     DateTime
+  totalCheckIns Int
+  totalHomeSessions Int
+  totalStamps Int
+  streakDays Int
+  slides     Json
+  isShared   Boolean  @default(false)
+  shareCount Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, weekStart])
+  @@index([userId])
+  @@index([weekStart])
+}
+
+model Prediction {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                 DateTime @default(now())
+  streakCurrent        Int
+  daysNoCheckinThisWeek Int
+  checkinsLast14d       Int
+  homeSessionsLast14d   Int
+  hibernationsTotal    Int
+  lastCheckinTimeBucket String
+  dayOfWeek            String
+  weeklyUsageTrend     Float
+  probability          Float
+  threshold            Float   @default(0.65)
+  riskLevel            String
+  interventionType     String?
+  interventionDate     DateTime?
+  wasDismissed         Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([date])
+  @@index([riskLevel])
+}
+
+model Notification {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title    String
+  body     String
+  type     String
+  isRead   Boolean  @default(false)
+  isSent   Boolean  @default(false)
+  sentAt   DateTime?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([isSent])
+}
+
+model ParqueRadioEpisode {
+  id       String   @id @default(cuid())
+  date     DateTime @unique
+  audioUrl String
+  duration Int      @default(60)
+  script   String
+  summary  String
+  plays    Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([date])
+}
+
+model WikiArticle {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  title      String
+  content    String
+  category   String
+  authorId   String?
+  author     User?    @relation(fields: [authorId], references: [id])
+  isPublished Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([isPublished])
+}
