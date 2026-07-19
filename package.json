@@ -2,14 +2,14 @@
   "name": "korso",
   "version": "0.1.0",
   "private": true,
-  "description": "Korso",
+  "description": "Mobile platform for university calisthenics adherence",
   "scripts": {
-    "dev": "concurrently \"pnpm dev --filter @korso/api\" \"pnpm start --filter @korso/mobile\"",
-    "dev:mobile": "pnpm start --filter @korso/mobile",
-    "dev:api": "pnpm dev --filter @korso/api",
-    "build": "pnpm build --filter @korso/api && pnpm build --filter @korso/mobile",
-    "lint": "pnpm lint --filter @korso/api && pnpm lint --filter @korso/mobile && pnpm lint --filter @korso/shared",
-    "typecheck": "pnpm typecheck --filter @korso/api && pnpm typecheck --filter @korso/mobile",
+    "dev": "concurrently \"cd apps/api && npm run dev\" \"cd apps/mobile && npm run start\"",
+    "dev:mobile": "cd apps/mobile && npm run start",
+    "dev:api": "cd apps/api && npm run dev",
+    "android": "cd apps/mobile && npm run android",
+    "build": "cd apps/api && npm run build",
+    "install:all": "npm install && cd apps/api && npm install && cd ../mobile && npm install && cd ../..",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down"
   },
@@ -18,6 +18,5 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "packageManager": "pnpm@9.0.0"
+  }
 }
