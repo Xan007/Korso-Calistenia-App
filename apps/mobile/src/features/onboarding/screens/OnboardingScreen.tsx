@@ -3,6 +3,7 @@ import type { ComponentType, ReactElement } from 'react';
 import { View, StyleSheet, useWindowDimensions, Animated } from 'react-native';
 import type { ListRenderItemInfo } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
+import Reanimated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '@/shared/theme';
 import { AccentButton } from '@/shared/components';
@@ -16,9 +17,12 @@ interface OnboardingScreenProps {
   onComplete: () => void;
 }
 
+const AnimatedFlatList = Reanimated.createAnimatedComponent(FlatList<Slide>);
+
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps): ReactElement {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
+  const scrollX = useSharedValue(0);
   const {
     flatListRef,
     currentIndex,
@@ -30,6 +34,10 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): ReactEl
     buttonStyle,
     scrollEnabled,
   } = useOnboardingNavigation(SLIDES.length, onComplete);
+
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollX.value = event.contentOffset.x;
+  });
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<Slide>): ReactElement => {
@@ -51,10 +59,10 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): ReactEl
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.topBar}>
-        <AnimatedPagination count={SLIDES.length} activeIndex={currentIndex} />
+        <AnimatedPagination count={SLIDES.length} scrollX={scrollX} slideWidth={screenWidth} />
       </View>
 
-      <FlatList
+      <AnimatedFlatList
         ref={flatListRef}
         data={SLIDES}
         keyExtractor={(item) => item.id}
@@ -63,6 +71,8 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): ReactEl
         scrollEnabled={scrollEnabled}
         showsHorizontalScrollIndicator={false}
         bounces={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
         renderItem={renderItem}

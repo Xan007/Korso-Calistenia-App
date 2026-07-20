@@ -43,7 +43,7 @@ export function useOnboardingNavigation(
     setReady(true);
     Animated.timing(buttonActivateAnim, {
       toValue: 1,
-      duration: 500,
+      duration: 250,
       useNativeDriver: true,
     }).start();
   }, [buttonActivateAnim]);

@@ -1,47 +1,50 @@
-import { useEffect, useRef } from 'react';
 import type { ReactElement } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import Animated, { interpolate, useAnimatedStyle, Extrapolation } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import { colors, spacing } from '@/shared/theme';
+
+interface AnimatedPaginationProps {
+  count: number;
+  scrollX: SharedValue<number>;
+  slideWidth: number;
+}
 
 export function AnimatedPagination({
   count,
-  activeIndex,
-}: {
-  count: number;
-  activeIndex: number;
-}): ReactElement {
-  const anims = useRef<Animated.Value[]>([]);
-
-  if (anims.current.length !== count) {
-    anims.current = Array.from({ length: count }, (_, i) => new Animated.Value(i === 0 ? 1 : 0));
-  }
-
-  useEffect(() => {
-    anims.current.forEach((anim, i) => {
-      Animated.timing(anim, {
-        toValue: i === activeIndex ? 1 : 0,
-        duration: 350,
-        useNativeDriver: false,
-      }).start();
-    });
-  }, [activeIndex]);
-
+  scrollX,
+  slideWidth,
+}: AnimatedPaginationProps): ReactElement {
   return (
     <View style={styles.pagination}>
-      {anims.current.map((anim, i) => (
-        <Animated.View
-          key={i}
-          style={[
-            styles.paginationDash,
-            {
-              backgroundColor: anim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [colors.text.disabled, colors.accent.normal],
-              }),
-            },
-          ]}
-        />
+      {Array.from({ length: count }, (_, i) => (
+        <Dash key={i} index={i} scrollX={scrollX} slideWidth={slideWidth} />
       ))}
+    </View>
+  );
+}
+
+interface DashProps {
+  index: number;
+  scrollX: SharedValue<number>;
+  slideWidth: number;
+}
+
+function Dash({ index, scrollX, slideWidth }: DashProps): ReactElement {
+  const fillStyle = useAnimatedStyle(() => {
+    // Fill left-to-right while scrolling into this slide; stay full once past it.
+    const progress = interpolate(
+      scrollX.value,
+      [(index - 1) * slideWidth, index * slideWidth],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+    return { width: `${progress * 100}%` };
+  });
+
+  return (
+    <View style={styles.dash}>
+      <Animated.View style={[styles.dashFill, fillStyle]} />
     </View>
   );
 }
@@ -53,9 +56,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     alignItems: 'center',
   },
-  paginationDash: {
+  dash: {
     flex: 1,
     height: 3,
     borderRadius: 2,
+    backgroundColor: colors.text.disabled,
+    overflow: 'hidden',
+  },
+  dashFill: {
+    height: '100%',
+    borderRadius: 2,
+    backgroundColor: colors.accent.normal,
   },
 });
